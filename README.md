@@ -1,15 +1,15 @@
-# Microservicio de Usuarios - Salud Al Día 🏥
+# Microservicio de Usuarios - Salud Al Día 
 
 Este microservicio se encarga de la gestión de autenticación y perfiles médicos para la plataforma **Salud Al Día**. Está construido con **Node.js**, **Express** y utiliza **Supabase** como base de datos y sistema de autenticación.
 
-## 🚀 Tecnologías Utilizadas
+##  Tecnologías Utilizadas
 
 * **Node.js & Express**: Entorno de ejecución y framework para la API.
 * **Supabase Auth**: Manejo de registro y login de usuarios.
 * **Supabase Database**: Almacenamiento de fichas médicas en PostgreSQL.
 * **CORS**: Configurado para permitir peticiones desde el frontend en Railway.
 
-## 🛠️ Instalación y Configuración Local
+##  Instalación y Configuración Local
 
 1.  **Clonar el repositorio:**
     ```bash
@@ -35,7 +35,7 @@ Este microservicio se encarga de la gestión de autenticación y perfiles médic
     npm start
     ```
 
-## 🌐 Endpoints de la API
+##  Endpoints de la API
 
 | Método | Ruta | Descripción |
 | :--- | :--- | :--- |
@@ -51,7 +51,7 @@ Este servicio está optimizado para ser desplegado en **Railway**.
 * **CORS**: La API acepta peticiones de todos los orígenes (`*`) para facilitar la conexión con el frontend desplegado.
 * **URL de Producción**: `https://ms-users-service-salud-production.up.railway.app`.
 
-## 📂 Estructura del Proyecto
+##  Estructura del Proyecto
 
 * `src/index.js`: Punto de entrada de la aplicación y configuración de rutas.
 * `src/supabase.js`: Configuración del cliente de Supabase.
