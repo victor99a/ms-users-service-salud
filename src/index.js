@@ -54,7 +54,7 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// --- RUTA 3: GUARDAR FICHA MÉDICA ---
+// RUTA 3: FICHA MÉDICA
 app.post('/medical/records', async (req, res) => {
   try {
     const { 
@@ -88,6 +88,72 @@ app.post('/medical/records', async (req, res) => {
   } catch (err) {
     console.error("Error en el microservicio:", err);
     res.status(500).json({ error: "Error procesando la ficha médica" });
+  }
+});
+
+// --- OBTENER FICHA MÉDICA (GET) ---
+app.get('/medical/records/:user_id', async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    if (!user_id) return res.status(400).json({ error: "Falta el ID del usuario" });
+    const { data, error } = await supabase
+      .from('medical_records')
+      .select('*')
+      .eq('user_id', user_id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ message: "Aún no has llenado tu ficha médica." });
+      }
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener la ficha" });
+  }
+});
+
+// --- ACTUALIZAR FICHA MÉDICA (PUT) ---
+app.put('/medical/records/:user_id', async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    
+    const { 
+      height, 
+      current_weight, 
+      allergies, 
+      chronic_diseases, 
+      emergency_contact_name, 
+      emergency_contact_phone,
+      blood_type 
+    } = req.body;
+
+    if (!user_id) return res.status(400).json({ error: "Falta ID de usuario" });
+
+    const { data, error } = await supabase
+      .from('medical_records')
+      .update({
+        height: parseFloat(height),
+        initial_weight: parseFloat(current_weight), 
+        allergies,
+        chronic_diseases,
+        emergency_contact_name,
+        emergency_contact_phone,
+        blood_type
+      })
+      .eq('user_id', user_id)
+      .select();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.status(200).json({ message: "Perfil actualizado correctamente", data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar" });
   }
 });
 
