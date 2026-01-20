@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const supabase = require('./supabase');
-const { encryptData, decryptData } = require('./src/utils/crypto');
+const { encryptData, decryptData } = require('./utils/crypto');
 
 const app = express();
 app.use(express.json());
@@ -60,7 +60,7 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// --- RUTA 3: FICHA MÉDICA (GUARDAR CON SEGURIDAD) ---
+// --- RUTA 3: FICHA MÉDICA  ---
 app.post('/medical/records', async (req, res) => {
   try {
     const { 
@@ -70,10 +70,9 @@ app.post('/medical/records', async (req, res) => {
 
     if (!user_id) return res.status(400).json({ error: "El ID de usuario es obligatorio" });
 
-    // 🔒 1. ENCRIPTAMOS DATOS SENSIBLES
     const encryptedPhone = encryptData(emergency_contact_phone);
     const encryptedDiseases = encryptData(chronic_diseases);
-    const encryptedAllergies = encryptData(allergies); // Opcional: encriptar alergias también
+    const encryptedAllergies = encryptData(allergies); 
 
     const { data, error } = await supabase
       .from('medical_records') 
@@ -84,9 +83,9 @@ app.post('/medical/records', async (req, res) => {
           height: parseFloat(height) || 0, 
           initial_weight: parseFloat(initial_weight) || 0, 
           allergies: encryptedAllergies, 
-          chronic_diseases: encryptedDiseases, // <--- Guardamos basura ilegible
+          chronic_diseases: encryptedDiseases,
           emergency_contact_name, 
-          emergency_contact_phone: encryptedPhone // <--- Guardamos basura ilegible
+          emergency_contact_phone: encryptedPhone //
         }
       ]);
 
@@ -99,29 +98,29 @@ app.post('/medical/records', async (req, res) => {
   }
 });
 
-// --- OBTENER FICHA MÉDICA (GET) ---
+// --- OBTENER FICHA MÉDICA (LEER DESENCRIPTADO) ---
 app.get('/medical/records/:user_id', async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    if (!user_id) return res.status(400).json({ error: "Falta el ID del usuario" });
     const { data, error } = await supabase
       .from('medical_records')
       .select('*')
       .eq('user_id', user_id)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ message: "Aún no has llenado tu ficha médica." });
-      }
-      return res.status(400).json({ error: error.message });
+    if (error) return res.status(400).json({ error: error.message });
+
+    if (data) {
+        data.emergency_contact_phone = decryptData(data.emergency_contact_phone);
+        data.chronic_diseases = decryptData(data.chronic_diseases);
+        data.allergies = decryptData(data.allergies);
     }
 
     res.status(200).json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Error al obtener la ficha" });
+    res.status(500).json({ error: "Error obteniendo ficha" });
   }
 });
 
@@ -142,23 +141,31 @@ app.put('/medical/records/:user_id', async (req, res) => {
 
     if (!user_id) return res.status(400).json({ error: "Falta ID de usuario" });
 
-    const { data, error } = await supabase
-      .from('medical_records')
-      .update({
+    // Ruta 4 - Actualizar
+    const encryptedPhone = emergency_contact_phone ? encryptData(emergency_contact_phone) : undefined;
+    const encryptedDiseases = chronic_diseases ? encryptData(chronic_diseases) : undefined;
+    const encryptedAllergies = allergies ? encryptData(allergies) : undefined;
+
+    const updatePayload = {
         height: parseFloat(height),
         initial_weight: parseFloat(current_weight), 
-        allergies,
-        chronic_diseases,
         emergency_contact_name,
-        emergency_contact_phone,
         blood_type
-      })
+    };
+
+    if (encryptedPhone) updatePayload.emergency_contact_phone = encryptedPhone;
+    if (encryptedDiseases) updatePayload.chronic_diseases = encryptedDiseases;
+    if (encryptedAllergies) updatePayload.allergies = encryptedAllergies;
+
+    const { data, error } = await supabase
+      .from('medical_records')
+      .update(updatePayload) 
       .eq('user_id', user_id)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });
 
-    res.status(200).json({ message: "Perfil actualizado correctamente", data });
+    res.status(200).json({ message: "Perfil actualizado y protegido correctamente", data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al actualizar" });
