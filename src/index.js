@@ -10,7 +10,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// --- RUTA 1: REGISTRO DE USUARIO ---
 app.post('/auth/signup', async (req, res) => {
   try {
     const { email, password, rut, first_names, last_names } = req.body;
@@ -41,7 +40,6 @@ app.post('/auth/signup', async (req, res) => {
   }
 });
 
-// --- RUTA 2: LOGIN DE USUARIO ---
 app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -54,7 +52,6 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// RUTA 3: FICHA MÉDICA
 app.post('/medical/records', async (req, res) => {
   try {
     const { 
@@ -91,7 +88,6 @@ app.post('/medical/records', async (req, res) => {
   }
 });
 
-// --- OBTENER FICHA MÉDICA (GET) ---
 app.get('/medical/records/:user_id', async (req, res) => {
   try {
     const { user_id } = req.params;
@@ -117,7 +113,6 @@ app.get('/medical/records/:user_id', async (req, res) => {
   }
 });
 
-// --- ACTUALIZAR FICHA MÉDICA (PUT) ---
 app.put('/medical/records/:user_id', async (req, res) => {
   try {
     const { user_id } = req.params;
@@ -157,6 +152,29 @@ app.put('/medical/records/:user_id', async (req, res) => {
   }
 });
 
-// --- CONFIGURACIÓN DEL PUERTO ---
+app.get('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) return res.status(400).json({ error: "Falta el ID del usuario" });
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error("Error buscando perfil:", error);
+      return res.status(404).json({ error: "Usuario no encontrado en profiles" });
+    }
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("Error interno:", err);
+    res.status(500).json({ error: "Error al obtener perfil del usuario" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Microservicio de Usuarios corriendo en puerto ${PORT}`));
